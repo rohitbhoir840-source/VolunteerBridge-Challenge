@@ -1,0 +1,306 @@
+<!--
+================================================================
+index_patch.html — HTML additions for index.html v2.1
+================================================================
+CRITICAL LOAD ORDER — update index.html script tags to:
+
+  <script src="backend.js"></script>
+  <script src="auth.js"></script>
+  <script src="demo_init.js"></script>      ← ADD
+  <script src="app.js"></script>
+  <script src="app_patch.js"></script>      ← ADD
+
+================================================================
+Each section below says WHERE to paste it in index.html.
+================================================================
+-->
+
+
+<!-- ==============================================================
+  [A] NAVBAR — Add Incidents nav link + 3rd signup role button
+  FIND:   <button class="nav-link" data-page="analytics"
+  ADD AFTER its closing </button>:
+=============================================================== -->
+<button class="nav-link" data-page="incidents" id="nav-incidents"
+        onclick="AppPatch.showIncidentsPage()">
+  🚨 Incidents
+</button>
+
+
+<!-- ==============================================================
+  [B] AUTH SIGNUP — Add General tab
+  FIND inside auth-signup-panel:
+    <div class="signup-role-toggle">
+      <button class="srole-btn active" id="srole-vol" ...>
+      <button class="srole-btn" id="srole-ngo" ...>
+    </div>
+  REPLACE that entire <div class="signup-role-toggle">…</div> with:
+=============================================================== -->
+<div class="signup-role-toggle" style="grid-template-columns:repeat(3,1fr)">
+  <button class="srole-btn active" id="srole-vol"
+          onclick="App.setSignupRole('volunteer')">🙌 Volunteer</button>
+  <button class="srole-btn" id="srole-ngo"
+          onclick="App.setSignupRole('ngo')">🏢 NGO</button>
+  <button class="srole-btn" id="srole-gen"
+          onclick="AppPatch.setSignupRoleGeneral()">👤 General</button>
+</div>
+
+
+<!-- ==============================================================
+  [C] AUTH SIGNUP — General user fields
+  FIND the closing </div> of the #signup-ngo-fields block.
+  ADD IMMEDIATELY AFTER it (still inside auth-signup-panel):
+=============================================================== -->
+<div id="signup-gen-fields" class="hidden">
+  <div class="gen-role-note">
+    <span>👤</span>
+    <div>
+      <strong>General Account</strong>
+      <p>Report incidents and follow community activity. Simplified access for the public.</p>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label" for="su-gen-name">Full Name *</label>
+      <input class="form-input" type="text" id="su-gen-name" placeholder="Your name" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="su-gen-phone">Phone (optional)</label>
+      <input class="form-input" type="tel" id="su-gen-phone" placeholder="+91-XXXXX-XXXXX" />
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label" for="su-gen-email">Email *</label>
+    <input class="form-input" type="email" id="su-gen-email" placeholder="you@example.com" />
+  </div>
+  <div class="form-group">
+    <label class="form-label" for="su-gen-location">City</label>
+    <select class="form-select" id="su-gen-location">
+      <option value="">Select city</option>
+      <option>Pune</option><option>Mumbai</option><option>Delhi</option>
+      <option>Bangalore</option><option>Hyderabad</option><option>Chennai</option>
+      <option>Kolkata</option><option>Ahmedabad</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label" for="su-gen-pw">Password *</label>
+      <input class="form-input" type="password" id="su-gen-pw" placeholder="Min 6 chars" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="su-gen-pw2">Confirm Password *</label>
+      <input class="form-input" type="password" id="su-gen-pw2" placeholder="Repeat" />
+    </div>
+  </div>
+  <div class="form-error hidden" id="signup-gen-error"></div>
+  <button class="btn btn-primary btn-full mt-16"
+          onclick="AppPatch.handleGeneralSignup()">
+    Create General Account →
+  </button>
+</div>
+
+
+<!-- ==============================================================
+  [D] VOLUNTEER SIDEBAR — Add Squad Chat shortcut
+  FIND inside #page-vol-dash sidebar:
+    <button class="sidebar-link" onclick="App.showVolTab('squads')"
+  CHANGE that button's text to include a chat icon:
+  (Or simply add after the squads sidebar-link button):
+=============================================================== -->
+<!-- This note is intentional — the sidebar already has squads.
+     The squad chat opens via the card button rendered by
+     _renderSquadsTab() which we add to each squad card.
+     No sidebar change needed beyond what's already there. -->
+
+
+<!-- ==============================================================
+  [E] NEW PAGE — Live Incidents Board
+  FIND:  <main id="page-ngo-profile" class="page hidden"
+  ADD BEFORE it:
+=============================================================== -->
+<main id="page-incidents" class="page hidden" role="main">
+  <!-- Rendered by AppPatch.renderIncidentsPage() -->
+</main>
+
+
+<!-- ==============================================================
+  [F] FLOATING REPORT BUTTON (FAB)
+  FIND:   <div id="toast-container"
+  ADD BEFORE it:
+=============================================================== -->
+<button id="report-fab" class="report-fab" onclick="AppPatch.openReportModal()"
+        title="Report an Incident" aria-label="Report Incident">
+  <span class="report-fab-icon">🚨</span>
+  <span class="report-fab-label">Report!</span>
+</button>
+
+
+<!-- ==============================================================
+  [G] MODAL — Report Incident
+  ADD BEFORE the closing </body> tag:
+=============================================================== -->
+<div class="modal-overlay hidden" id="modal-report-incident"
+     onclick="App.handleModalOverlayClick(event,'modal-report-incident')">
+  <div class="modal modal-lg" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 class="modal-title">🚨 Report an Incident</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-report-incident')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="ri-type">Incident Type *</label>
+        <select class="form-select" id="ri-type">
+          <option value="">Select type…</option>
+          <option>Flood / Water Logging</option>
+          <option>Mass Casualty — Road Accident</option>
+          <option>Fire / Building Collapse</option>
+          <option>Medical Emergency — Outbreak</option>
+          <option>Community Health Concern</option>
+          <option>Earthquake Damage</option>
+          <option>Missing Person / Child</option>
+          <option>Hunger / Food Crisis</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="ri-location">Location *</label>
+        <input class="form-input" type="text" id="ri-location"
+               placeholder="e.g. Hadapsar, Pune or NH-48 near Khopoli" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="ri-desc">Description *</label>
+        <textarea class="form-textarea" id="ri-desc" rows="3"
+                  placeholder="Describe what you see — number of people affected, immediate needs, road access…"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="ri-fatalities">Fatalities (if known)</label>
+          <input class="form-input" type="number" id="ri-fatalities" min="0" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ri-injuries">Injuries (if known)</label>
+          <input class="form-input" type="number" id="ri-injuries" min="0" placeholder="0" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Criticality</label>
+        <div class="crit-picker">
+          <label class="crit-option crit-high">
+            <input type="radio" name="ri-crit" id="ri-crit-high" value="High" />
+            <span>🔴 High — Immediate life risk</span>
+          </label>
+          <label class="crit-option crit-low">
+            <input type="radio" name="ri-crit" id="ri-crit-low" value="Low" checked />
+            <span>🟡 Low — Needs attention</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-error hidden" id="ri-error"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="App.closeModal('modal-report-incident')">Cancel</button>
+        <button class="btn btn-danger" onclick="AppPatch.submitIncidentReport()">
+          🚨 Submit Report
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==============================================================
+  [H] MODAL — NGO Rate Ngo (already exists; this adds Rate NGO)
+  FIND:  <div class="modal-overlay hidden" id="modal-rate-vol"
+  ADD BEFORE it:
+=============================================================== -->
+<div class="modal-overlay hidden" id="modal-rate-ngo"
+     onclick="App.handleModalOverlayClick(event,'modal-rate-ngo')">
+  <div class="modal modal-sm" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-rate-ngo-title">⭐ Rate NGO</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-rate-ngo')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Your Rating (1–5 Stars)</label>
+        <div class="star-picker">
+          <button type="button" class="star-btn" data-val="1" onclick="App.selectNgoStar(1)">★</button>
+          <button type="button" class="star-btn" data-val="2" onclick="App.selectNgoStar(2)">★</button>
+          <button type="button" class="star-btn" data-val="3" onclick="App.selectNgoStar(3)">★</button>
+          <button type="button" class="star-btn" data-val="4" onclick="App.selectNgoStar(4)">★</button>
+          <button type="button" class="star-btn" data-val="5" onclick="App.selectNgoStar(5)">★</button>
+        </div>
+      </div>
+      <div class="form-group mt-16">
+        <label class="form-label" for="modal-rate-ngo-note-input">Note (optional)</label>
+        <textarea class="form-textarea" id="modal-rate-ngo-note-input" rows="2"
+                  placeholder="Share your experience…"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="App.closeModal('modal-rate-ngo')">Cancel</button>
+        <button class="btn btn-primary" onclick="App.submitNgoRating()">Submit ⭐</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==============================================================
+  [I] MODAL — Squad Chat
+  ADD BEFORE the closing </body> tag:
+=============================================================== -->
+<div class="modal-overlay hidden" id="modal-squad-chat">
+  <div class="modal modal-lg" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-squad-chat-title">⚔️ Squad Chat</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-squad-chat');AppPatch._activeSquadChatId=null">✕</button>
+    </div>
+    <div class="modal-body" style="padding-bottom:0">
+      <div class="chat-thread" id="squad-chat-thread"
+           style="min-height:260px;max-height:360px;overflow-y:auto;padding:4px 0;margin-bottom:14px"></div>
+      <div style="display:flex;gap:8px;padding:14px 0;border-top:1px solid var(--border)">
+        <input class="form-input" type="text" id="squad-chat-input"
+               placeholder="Message your squad…"
+               onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();AppPatch.sendSquadChatMessage()}"
+               style="flex:1" />
+        <button class="btn btn-primary" onclick="AppPatch.sendSquadChatMessage()">Send →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==============================================================
+  [J] VOLUNTEER SQUADS TAB — Add Chat button to each squad card
+  NOTE: The _renderSquadsTab() function in app.js renders squads.
+  You need to patch the squad card HTML in app.js to include a
+  "Squad Chat" button. Find in app.js:
+    <button class="btn btn-ghost btn-xs" onclick="App._openInviteSquadModal
+  ADD BEFORE that button:
+    <button class="btn btn-primary btn-xs" onclick="AppPatch.openSquadChat('${squad.id}')">💬 Chat</button>
+=============================================================== -->
+<!-- Patch instruction above — no HTML block needed here. -->
+
+
+<!-- ==============================================================
+  [K] ANALYTICS PAGE — Ensure page element exists
+  The <main id="page-analytics"> element should already exist.
+  The AppPatch.renderNgoAnalyticsPage() rewrites its content.
+  If it doesn't exist, add:
+=============================================================== -->
+<!-- Verify in your index.html that this line exists:
+     <main id="page-analytics" class="page hidden" role="main">
+     If missing, add it before the closing </body> tag. -->
+
+
+<!-- ==============================================================
+  [L] INBOX PANEL — (probably already exists from prior patches)
+  Verify <div class="inbox-panel" id="inbox-panel"> exists.
+  If missing, add before the scripts block:
+=============================================================== -->
+<div class="inbox-panel" id="inbox-panel">
+  <div class="notif-panel-header">
+    <span class="fw-600">💬 Inbox</span>
+    <button class="btn btn-ghost btn-xs" onclick="App.openInbox()">✕</button>
+  </div>
+  <div class="notif-list" id="inbox-thread-list"></div>
+</div>

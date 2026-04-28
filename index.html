@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VolunteerBridge — Smart Volunteer Allocation Platform</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     NAVBAR
+════════════════════════════════════════════════════════════ -->
+<header id="navbar">
+  <div class="nav-inner">
+    <button class="nav-brand" onclick="App.showPage('landing')">
+      <span class="nav-logo" aria-hidden="true">🤝</span>
+      <span>VolunteerBridge</span>
+    </button>
+
+<div class="global-search-wrap" id="global-search-wrap">
+  <div class="global-search-bar">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="global-search-input" placeholder="Search volunteers, NGOs, tasks…"
+           oninput="App.handleGlobalSearch(this.value)"
+           onfocus="App.handleGlobalSearch(this.value)"
+           autocomplete="off" />
+  </div>
+  <div class="search-dropdown hidden" id="global-search-dropdown"></div>
+</div>
+
+    <nav class="nav-links" id="nav-links" aria-label="Main navigation">
+      <button class="nav-link" data-page="landing"       onclick="App.showPage('landing')">Home</button>
+      <button class="nav-link" data-page="vol-dash"      id="nav-vol-dash"  onclick="App.guardPage('vol-dash','volunteer')">Volunteer Hub</button>
+      <button class="nav-link" data-page="ngo-dash"      id="nav-ngo-dash"  onclick="App.guardPage('ngo-dash','ngo')">NGO Portal</button>
+      <button class="nav-link" data-page="create-task"   id="nav-create"    onclick="App.guardPage('create-task','ngo')">Post Task</button>
+      <button class="nav-link" data-page="analytics"     id="nav-analytics" onclick="App.guardPage('analytics','ngo')">Analytics</button>
+<button class="nav-link" data-page="incidents" id="nav-incidents"
+        onclick="App.showIncidentsPage()">
+  🚨 Incidents
+</button>
+<button class="nav-link" data-page="leaderboard" id="nav-leaderboard"
+        onclick="App.showPage('leaderboard')">🏆 Leaderboard</button>
+    </nav>
+
+    <div class="nav-actions">
+      <button class="notif-btn" id="msg-btn" onclick="App.openInbox()" aria-label="Messages" title="Messages">
+        💬
+        <span class="notif-badge hidden" id="msg-badge">0</span>
+      </button>
+
+      <!-- Notification bell -->
+      <button class="notif-btn" id="notif-btn" onclick="App.toggleNotifPanel()" aria-label="Notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-badge hidden" id="notif-badge">0</span>
+      </button>
+
+      <!-- User area -->
+      <div id="nav-user-area">
+        <button class="btn btn-ghost btn-sm"    onclick="App.showPage('auth')">Sign In</button>
+        <button class="btn btn-primary btn-sm"  onclick="App.showPage('auth')">Get Started</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Notification Panel -->
+<div class="notif-panel" id="notif-panel" role="dialog" aria-label="Notifications">
+  <div class="notif-panel-header">
+    <span class="fw-600">Notifications</span>
+    <button class="btn btn-ghost btn-xs" onclick="App.markAllNotifRead()">Mark all read</button>
+  </div>
+  <div class="notif-list" id="notif-list"></div>
+</div>
+
+<div class="inbox-panel" id="inbox-panel">
+  <div class="notif-panel-header">
+    <span class="fw-600">💬 Inbox</span>
+    <button class="btn btn-ghost btn-xs" onclick="App.openInbox()">✕</button>
+  </div>
+  <div class="notif-list" id="inbox-thread-list"></div>
+</div>
+
+<button id="report-fab" class="report-fab" onclick="App.openReportModal()"
+        title="Report an Incident" aria-label="Report Incident">
+  <span class="report-fab-icon">🚨</span>
+  <span class="report-fab-label">Report!</span>
+</button>
+
+<!-- Toast container -->
+<div id="toast-container" aria-live="polite"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGES
+════════════════════════════════════════════════════════════ -->
+
+<!-- ── LANDING ──────────────────────────────────────────── -->
+<main id="page-landing" class="page" role="main">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-noise"></div>
+    <div class="container hero-content">
+      <div class="hero-text">
+        <div class="eyebrow">
+          <span class="eyebrow-dot"></span>
+          AI-Powered Matching Platform
+        </div>
+        <h1 class="hero-title">Bridging <span class="gradient-text">Skills</span><br>with Service</h1>
+        <p class="hero-sub">Connect passionate volunteers with NGOs that need them most. Our smart algorithm matches skills, availability, and location — turning goodwill into real impact.</p>
+        <div class="hero-ctas">
+          <button class="btn btn-primary btn-lg" onclick="App.showPage('auth'); App.setAuthMode('volunteer')">
+            🙌 Join as Volunteer
+          </button>
+          <button class="btn btn-outline-light btn-lg" onclick="App.showPage('auth'); App.setAuthMode('ngo')">
+            📋 Post a Need
+          </button>
+<button class="btn btn-ghost btn-lg" style="color:white;border:1.5px solid rgba(255,255,255,0.3)"
+        onclick="App.openDonationModal('ngo_001','Health First NGO')">
+  💚 Donate Now (₹)
+</button>
+  <button class="btn btn-ghost btn-lg"
+          style="color:var(--amber);border:1.5px solid rgba(255,255,255,.2)"
+          onclick="App.showPage('leaderboard')">
+    🏆 Leaderboard
+  </button>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="hero-stat-val" id="stat-volunteers">0</div><div class="hero-stat-lbl">Active Volunteers</div></div>
+          <div class="hero-stat-div"></div>
+          <div class="hero-stat"><div class="hero-stat-val" id="stat-tasks">0</div><div class="hero-stat-lbl">Open Tasks</div></div>
+          <div class="hero-stat-div"></div>
+          <div class="hero-stat"><div class="hero-stat-val" id="stat-hours">0</div><div class="hero-stat-lbl">Hours Contributed</div></div>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="match-preview-card">
+          <div class="mpc-label">🤖 Smart Match · Medical Camp</div>
+          <div class="mpc-row"><div class="mini-avatar" style="background:#1d4ed8">AK</div><div class="mpc-info"><div class="mpc-name">Anjali Krishnan</div><div class="mpc-skills">Medical · Teaching</div></div><div class="mpc-score">94%</div></div>
+          <div class="mpc-bar"><div class="mpc-bar-fill" style="width:94%"></div></div>
+        </div>
+        <div class="match-preview-card card-shifted">
+          <div class="mpc-label">📍 Nearby · Pune</div>
+          <div class="mpc-row"><div class="mini-avatar" style="background:#16a34a">RV</div><div class="mpc-info"><div class="mpc-name">Rohan Verma</div><div class="mpc-skills">Tech · Logistics</div></div><div class="mpc-score">87%</div></div>
+          <div class="mpc-bar"><div class="mpc-bar-fill" style="width:87%"></div></div>
+        </div>
+        <div class="match-preview-card card-shifted2">
+          <div class="mpc-label">⚡ High Priority Match</div>
+          <div class="mpc-row"><div class="mini-avatar" style="background:#7c3aed">KS</div><div class="mpc-info"><div class="mpc-name">Kavya Sharma</div><div class="mpc-skills">Medical · Counseling</div></div><div class="mpc-score">81%</div></div>
+          <div class="mpc-bar"><div class="mpc-bar-fill" style="width:81%"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="hiw-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="eyebrow dark">✦ Simple Process</div>
+        <h2 class="section-title">How VolunteerBridge Works</h2>
+        <p class="section-sub">Three steps to connect skills with real-world impact.</p>
+      </div>
+      <div class="hiw-grid">
+        <div class="hiw-step">
+          <div class="hiw-icon hiw-icon-blue"><span>🧑‍💼</span><span class="hiw-step-num">1</span></div>
+          <h3>Create Your Profile</h3>
+          <p>Register with your skills, location, availability, and bio. NGOs post volunteer needs with requirements and priority levels.</p>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-icon hiw-icon-green"><span>🎯</span><span class="hiw-step-num">2</span></div>
+          <h3>Smart Matching</h3>
+          <p>Our AI engine scores volunteers against tasks by skill overlap, proximity, and availability. NGOs approve the best fits.</p>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-icon hiw-icon-purple"><span>💚</span><span class="hiw-step-num">3</span></div>
+          <h3>Create Impact</h3>
+          <p>Show up, contribute hours, and track your real-world social impact. Every hour is logged and valued.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo Credentials Strip -->
+  <section class="demo-strip">
+    <div class="container">
+      <div class="demo-strip-inner">
+        <span class="demo-strip-label">🔑 Demo Accounts — Try the platform instantly:</span>
+        <div class="demo-pills">
+          <span class="demo-pill ngo-pill" onclick="App.fillDemoLogin('healthfirst@ngo.org','health2025','ngo')">🏢 Health First NGO</span>
+          <span class="demo-pill ngo-pill" onclick="App.fillDemoLogin('techforall@ngo.org','tech2025','ngo')">🏢 TechForAll NGO</span>
+          <span class="demo-pill vol-pill" onclick="App.fillDemoLogin('anjali@example.com','anjali2025','volunteer')">🙌 Anjali (Volunteer)</span>
+          <span class="demo-pill vol-pill" onclick="App.fillDemoLogin('rohan@example.com','rohan2025','volunteer')">🙌 Rohan (Volunteer)</span>
+          <span class="demo-pill vol-pill" onclick="App.fillDemoLogin('kavya@example.com','kavya2025','volunteer')">🙌 Kavya (Volunteer)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <span><strong>VolunteerBridge</strong> v2.0 · Hackathon Edition · 2025</span>
+      <span>Built with 💙 for social impact</span>
+    </div>
+  </footer>
+</main>
+
+<!-- ── AUTH ─────────────────────────────────────────────── -->
+<main id="page-auth" class="page page-center hidden" role="main">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-logo">🤝</div>
+      <h2 class="auth-title">VolunteerBridge</h2>
+      <p class="auth-sub">Sign in or create your account</p>
+    </div>
+
+    <!-- Tab switcher -->
+    <div class="auth-tabs" role="tablist">
+      <button class="auth-tab active" id="tab-signin" role="tab" onclick="App.setAuthTab('signin')">Sign In</button>
+      <button class="auth-tab" id="tab-signup" role="tab" onclick="App.setAuthTab('signup')">Create Account</button>
+    </div>
+
+    <!-- ── SIGN IN PANEL ── -->
+    <div id="auth-signin-panel">
+      <div class="role-select-row">
+        <div class="role-card selected" id="role-volunteer" onclick="App.selectRole('volunteer')" tabindex="0">
+          <div class="role-icon">🙌</div>
+          <div class="role-name">Volunteer</div>
+          <div class="role-desc">I want to help</div>
+        </div>
+        <div class="role-card" id="role-ngo" onclick="App.selectRole('ngo')" tabindex="0">
+          <div class="role-icon">🏢</div>
+          <div class="role-name">NGO / Org</div>
+          <div class="role-desc">I need volunteers</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="si-email">Email Address</label>
+        <input class="form-input" type="email" id="si-email" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="si-password">Password</label>
+        <div class="input-with-icon">
+          <input class="form-input" type="password" id="si-password" placeholder="Your password" onkeydown="if(event.key==='Enter') App.handleLogin()" />
+          <button class="show-pw-btn" onclick="App.togglePasswordVisibility('si-password', this)" type="button">👁</button>
+        </div>
+      </div>
+      <div class="form-error hidden" id="signin-error"></div>
+      <button class="btn btn-primary btn-full mt-16" onclick="App.handleLogin()">Sign In →</button>
+      <p class="auth-switch-note">Don't have an account? <button class="link-btn" onclick="App.setAuthTab('signup')">Create one free</button></p>
+    </div>
+
+    <!-- ── SIGN UP PANEL ── -->
+    <div id="auth-signup-panel" class="hidden">
+
+      <!-- Role toggle for signup -->
+      <div class="signup-role-toggle" style="grid-template-columns:repeat(3,1fr)">
+        <button class="srole-btn active" id="srole-vol"
+                onclick="App.setSignupRole('volunteer')">🙌 Volunteer</button>
+        <button class="srole-btn" id="srole-ngo"
+                onclick="App.setSignupRole('ngo')">🏢 NGO</button>
+        <button class="srole-btn" id="srole-gen"
+                onclick="App.setSignupRoleGeneral()">👤 General</button>
+      </div>
+
+      <!-- Volunteer signup fields -->
+      <div id="signup-vol-fields">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="su-name">Full Name *</label>
+            <input class="form-input" type="text" id="su-name" placeholder="Anjali Krishnan" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="su-dob">Date of Birth</label>
+            <input class="form-input" type="date" id="su-dob" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="su-email">Email Address *</label>
+          <input class="form-input" type="email" id="su-email" placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="su-bio">Bio / About You</label>
+          <textarea class="form-textarea" id="su-bio" placeholder="Tell NGOs about your background, experience, and why you volunteer..." rows="2"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="su-location">City *</label>
+            <select class="form-select" id="su-location">
+              <option value="">Select city</option>
+              <option>Pune</option><option>Mumbai</option><option>Delhi</option>
+              <option>Bangalore</option><option>Hyderabad</option><option>Chennai</option>
+              <option>Kolkata</option><option>Ahmedabad</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="su-avail">General Availability</label>
+            <select class="form-select" id="su-avail">
+              <option value="">Select</option>
+              <option>Weekends</option><option>Weekdays</option>
+              <option>Full-time</option><option>Flexible</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Skills *</label>
+          <div class="skill-chip-grid" id="su-skill-chips">
+            <button type="button" class="skill-chip" data-skill="Medical"      onclick="App.toggleSignupSkill(this)">🏥 Medical</button>
+            <button type="button" class="skill-chip" data-skill="Tech"         onclick="App.toggleSignupSkill(this)">💻 Tech</button>
+            <button type="button" class="skill-chip" data-skill="Logistics"    onclick="App.toggleSignupSkill(this)">📦 Logistics</button>
+            <button type="button" class="skill-chip" data-skill="Teaching"     onclick="App.toggleSignupSkill(this)">📚 Teaching</button>
+            <button type="button" class="skill-chip" data-skill="Counseling"   onclick="App.toggleSignupSkill(this)">🧠 Counseling</button>
+            <button type="button" class="skill-chip" data-skill="Construction" onclick="App.toggleSignupSkill(this)">🔧 Construction</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Available Days</label>
+          <div class="day-chip-grid" id="su-day-chips">
+            <button type="button" class="day-chip" data-day="Monday"    onclick="App.toggleDayChip(this)">Mon</button>
+            <button type="button" class="day-chip" data-day="Tuesday"   onclick="App.toggleDayChip(this)">Tue</button>
+            <button type="button" class="day-chip" data-day="Wednesday" onclick="App.toggleDayChip(this)">Wed</button>
+            <button type="button" class="day-chip" data-day="Thursday"  onclick="App.toggleDayChip(this)">Thu</button>
+            <button type="button" class="day-chip" data-day="Friday"    onclick="App.toggleDayChip(this)">Fri</button>
+            <button type="button" class="day-chip" data-day="Saturday"  onclick="App.toggleDayChip(this)">Sat</button>
+            <button type="button" class="day-chip" data-day="Sunday"    onclick="App.toggleDayChip(this)">Sun</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="su-pw">Password *</label>
+            <input class="form-input" type="password" id="su-pw" placeholder="Min 6 characters" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="su-pw2">Confirm Password *</label>
+            <input class="form-input" type="password" id="su-pw2" placeholder="Repeat password" />
+          </div>
+        </div>
+      </div>
+
+      <!-- NGO signup fields -->
+      <div id="signup-ngo-fields" class="hidden">
+        <div class="form-group">
+          <label class="form-label" for="su-orgname">Organisation Name *</label>
+          <input class="form-input" type="text" id="su-orgname" placeholder="Health First India" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="su-ngo-email">Email Address *</label>
+          <input class="form-input" type="email" id="su-ngo-email" placeholder="org@example.org" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="su-ngo-phone">Contact Phone</label>
+          <input class="form-input" type="tel" id="su-ngo-phone" placeholder="+91-XXXXX-XXXXX" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="su-ngo-location">City</label>
+            <select class="form-select" id="su-ngo-location">
+              <option value="">Select city</option>
+              <option>Pune</option><option>Mumbai</option><option>Delhi</option>
+              <option>Bangalore</option><option>Hyderabad</option><option>Chennai</option>
+              <option>Kolkata</option><option>Ahmedabad</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="su-ngo-pw">Password *</label>
+            <input class="form-input" type="password" id="su-ngo-pw" placeholder="Min 6 characters" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="su-ngo-pw2">Confirm Password *</label>
+          <input class="form-input" type="password" id="su-ngo-pw2" placeholder="Repeat password" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="su-ngo-bio">Organisation Description</label>
+          <textarea class="form-textarea" id="su-ngo-bio" placeholder="Tell volunteers about your mission..." rows="2"></textarea>
+        </div>
+      </div>
+
+<div id="signup-gen-fields" class="hidden">
+  <div class="gen-role-note">
+    <span>👤</span>
+    <div>
+      <strong>General Account</strong>
+      <p>Report incidents and follow community activity. Simplified access for the public.</p>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label" for="su-gen-name">Full Name *</label>
+      <input class="form-input" type="text" id="su-gen-name" placeholder="Your name" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="su-gen-phone">Phone (optional)</label>
+      <input class="form-input" type="tel" id="su-gen-phone" placeholder="+91-XXXXX-XXXXX" />
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label" for="su-gen-email">Email *</label>
+    <input class="form-input" type="email" id="su-gen-email" placeholder="you@example.com" />
+  </div>
+  <div class="form-group">
+    <label class="form-label" for="su-gen-location">City</label>
+    <select class="form-select" id="su-gen-location">
+      <option value="">Select city</option>
+      <option>Pune</option><option>Mumbai</option><option>Delhi</option>
+      <option>Bangalore</option><option>Hyderabad</option><option>Chennai</option>
+      <option>Kolkata</option><option>Ahmedabad</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label" for="su-gen-pw">Password *</label>
+      <input class="form-input" type="password" id="su-gen-pw" placeholder="Min 6 chars" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="su-gen-pw2">Confirm Password *</label>
+      <input class="form-input" type="password" id="su-gen-pw2" placeholder="Repeat" />
+    </div>
+  </div>
+  <div class="form-error hidden" id="signup-gen-error"></div>
+  <button class="btn btn-primary btn-full mt-16"
+          onclick="App.handleGeneralSignup()">
+    Create General Account →
+  </button>
+</div>
+
+      <div class="form-error hidden" id="signup-error"></div>
+      <button class="btn btn-emerald btn-full mt-16" onclick="App.handleSignup()">Create Account 🚀</button>
+      <p class="auth-switch-note">Already have an account? <button class="link-btn" onclick="App.setAuthTab('signin')">Sign in</button></p>
+    </div>
+  </div>
+</main>
+
+<!-- ── VOLUNTEER DASHBOARD ───────────────────────────────── -->
+<main id="page-vol-dash" class="page hidden" role="main">
+  <div class="dash-layout">
+    <!-- Sidebar -->
+    <aside class="dash-sidebar">
+      <div id="vol-profile-sidebar"></div>
+      <nav class="sidebar-card sidebar-nav-card" aria-label="Volunteer navigation">
+        <div class="sidebar-section-label">Dashboard</div>
+        <button class="sidebar-link active" onclick="App.showVolTab('opportunities')" data-tab="opportunities">
+          <span class="sl-icon">🎯</span> Opportunities
+        </button>
+        <button class="sidebar-link" onclick="App.showVolTab('my-tasks')" data-tab="my-tasks">
+          <span class="sl-icon">📋</span> My Commitments
+        </button>
+        <button class="sidebar-link" onclick="App.showVolTab('availability')" data-tab="availability">
+          <span class="sl-icon">📅</span> My Availability
+        </button>
+        <button class="sidebar-link" onclick="App.showVolTab('map')" data-tab="map">
+          <span class="sl-icon">🗺️</span> Task Map
+        </button>
+<button class="sidebar-link" onclick="App.showVolTab('incentives')" data-tab="incentives">
+  <span class="sl-icon">🏆</span> Incentives
+</button>
+<button class="sidebar-link" onclick="App.showVolTab('certificates')" data-tab="certificates">
+  <span class="sl-icon">📜</span> Certificates
+</button>
+        <div class="sidebar-section-label mt-8">Account</div>
+        <button class="sidebar-link" onclick="App.openProfileModal()">
+          <span class="sl-icon">👤</span> View Profile
+        </button>
+<button class="sidebar-link" onclick="App.showVolTab('squads')" data-tab="squads">
+  <span class="sl-icon">⚔️</span> My Squad
+</button>
+        <button class="sidebar-link danger" onclick="App.handleLogout()">
+          <span class="sl-icon">🚪</span> Sign Out
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <section class="dash-main">
+      <!-- Tab: Opportunities -->
+      <div id="vol-tab-opportunities" class="dash-tab active">
+        <div class="dash-tab-header">
+          <div>
+            <h2 class="dash-title">Recommended for You</h2>
+            <p class="dash-sub">Tasks matched to your skills and location</p>
+          </div>
+          <div class="dash-actions">
+            <div class="search-bar">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" placeholder="Search tasks…" id="vol-search" oninput="App.handleVolSearch(this.value)" />
+            </div>
+          </div>
+        </div>
+<div class="activity-ticker-wrap" id="activity-ticker-wrap">
+  <span class="ticker-label">🔴 LIVE</span>
+  <div class="activity-ticker" id="activity-ticker">Loading activity…</div>
+</div>
+        <div class="filter-chips" id="vol-priority-filters">
+          <button class="filter-chip active" onclick="App.filterByPriority('all', this)">All</button>
+          <button class="filter-chip" onclick="App.filterByPriority('Critical', this)">🔴 Critical</button>
+          <button class="filter-chip" onclick="App.filterByPriority('High', this)">🟡 High</button>
+          <button class="filter-chip" onclick="App.filterByPriority('Medium', this)">🔵 Medium</button>
+          <button class="filter-chip" onclick="App.filterByPriority('Low', this)">🟢 Low</button>
+        </div>
+        <div id="vol-task-list"></div>
+      </div>
+
+      <!-- Tab: My Commitments -->
+      <div id="vol-tab-my-tasks" class="dash-tab hidden">
+        <div class="dash-tab-header">
+          <h2 class="dash-title">My Commitments</h2>
+        </div>
+        <div id="vol-my-tasks-list"></div>
+      </div>
+
+      <!-- Tab: Availability -->
+      <div id="vol-tab-availability" class="dash-tab hidden">
+        <div class="dash-tab-header">
+          <h2 class="dash-title">My Availability</h2>
+          <p class="dash-sub">Update the specific days you are available to volunteer</p>
+        </div>
+        <div class="card" id="vol-availability-card"></div>
+      </div>
+
+      <!-- Tab: Map -->
+      <div id="vol-tab-map" class="dash-tab hidden">
+        <div class="dash-tab-header">
+          <h2 class="dash-title">Task Map View</h2>
+          <p class="dash-sub">Visual overview of active tasks across India</p>
+        </div>
+        <div class="map-container" id="vol-map"></div>
+      </div>
+<div id="vol-tab-incentives" class="dash-tab hidden"></div>
+<div id="vol-tab-certificates" class="dash-tab hidden"></div>
+<div id="vol-tab-squads" class="dash-tab hidden"></div>
+    </section>
+  </div>
+</main>
+
+<!-- ── NGO DASHBOARD ─────────────────────────────────────── -->
+<main id="page-ngo-dash" class="page hidden" role="main">
+  <div class="dash-layout">
+    <!-- Sidebar -->
+    <aside class="dash-sidebar">
+      <div id="ngo-profile-sidebar"></div>
+      <nav class="sidebar-card sidebar-nav-card" aria-label="NGO navigation">
+        <div class="sidebar-section-label">Management</div>
+        <button class="sidebar-link active" onclick="App.showNgoTab('tasks')" data-tab="tasks">
+          <span class="sl-icon">📋</span> Task Board
+        </button>
+        <button class="sidebar-link" onclick="App.showNgoTab('volunteers')" data-tab="volunteers">
+          <span class="sl-icon">👥</span> Volunteer Pool
+        </button>
+        <button class="sidebar-link" onclick="App.showNgoTab('map')" data-tab="map">
+          <span class="sl-icon">🗺️</span> Map View
+        </button>
+<button class="sidebar-link" onclick="App.showNgoTab('donations')" data-tab="donations">
+  <span class="sl-icon">💚</span> Donations
+</button>
+        <div class="sidebar-section-label mt-8">Tools</div>
+        <button class="sidebar-link" onclick="App.guardPage('create-task','ngo')">
+          <span class="sl-icon">➕</span> Post New Task
+        </button>
+        <button class="sidebar-link" onclick="App.guardPage('analytics','ngo')">
+          <span class="sl-icon">📊</span> Analytics
+        </button>
+        <div class="sidebar-section-label mt-8">Account</div>
+        <button class="sidebar-link" onclick="App.openProfileModal()">
+          <span class="sl-icon">👤</span> View Profile
+        </button>
+        <button class="sidebar-link danger" onclick="App.handleLogout()">
+          <span class="sl-icon">🚪</span> Sign Out
+        </button>
+      </nav>
+      <div class="sidebar-card" id="ngo-quick-stats"></div>
+    </aside>
+
+    <section class="dash-main">
+      <!-- Tab: Tasks -->
+      <div id="ngo-tab-tasks" class="dash-tab active">
+        <div class="dash-tab-header">
+          <div>
+            <h2 class="dash-title">Task Board</h2>
+            <p class="dash-sub">Manage your volunteer needs and applications</p>
+          </div>
+          <button class="btn btn-primary" onclick="App.guardPage('create-task','ngo')">➕ New Task</button>
+        </div>
+        <div id="ngo-task-list"></div>
+      </div>
+
+      <!-- Tab: Volunteer Pool -->
+            <!-- Tab: Volunteer Pool -->
+      <div id="ngo-tab-volunteers" class="dash-tab hidden">
+        <div class="dash-tab-header">
+          <h2 class="dash-title">Volunteer Pool</h2>
+          <span class="badge badge-blue" id="vol-pool-count"></span>
+        </div>
+        <!-- Ensure this ID 'ngo-vol-list' is exactly as the JS expects -->
+        <div class="vol-grid" id="ngo-vol-list">
+             <!-- JS will inject cards here -->
+        </div>
+      </div>
+
+
+      <!-- Tab: Map -->
+      <div id="ngo-tab-map" class="dash-tab hidden">
+        <div class="dash-tab-header">
+          <h2 class="dash-title">Task Map View</h2>
+        </div>
+        <div class="map-container" id="ngo-map"></div>
+      </div>
+<!-- Tab: Donations -->
+<div id="ngo-tab-donations" class="dash-tab hidden">
+  <div class="dash-tab-header">
+    <h2 class="dash-title">Donations & Funding</h2>
+    <p class="dash-sub">Track contributions and support for your mission</p>
+  </div>
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Donor</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody id="ngo-donations-list">
+          <!-- The App.js script will inject rows here[span_2](start_span)[span_2](end_span) -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+    </section>
+  </div>
+</main>
+
+<!-- ── CREATE TASK ───────────────────────────────────────── -->
+<main id="page-create-task" class="page hidden" role="main">
+  <div class="create-task-wrapper">
+    <div class="page-header-row">
+      <div>
+        <div class="eyebrow dark">✦ NGO Portal</div>
+        <h2 class="page-title">Create a New Task</h2>
+        <p class="page-sub">Post a volunteer need and let our algorithm find the best matches.</p>
+      </div>
+      <button class="btn btn-ghost" onclick="App.guardPage('ngo-dash','ngo')">← Back to Dashboard</button>
+    </div>
+    <div class="form-card">
+      <div class="form-section">
+        <div class="form-section-title">📌 Task Details</div>
+        <div class="form-group">
+          <label class="form-label" for="ct-title">Task Title *</label>
+          <input class="form-input" type="text" id="ct-title" placeholder="e.g. Medical Camp Setup in Hadapsar" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ct-desc">Full Description *</label>
+          <textarea class="form-textarea" id="ct-desc" rows="4" placeholder="Describe the task, what volunteers will do, expected outcomes, logistics…"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="ct-priority">Priority Level *</label>
+            <select class="form-select" id="ct-priority">
+              <option value="">Select priority</option>
+              <option value="Critical">🔴 Critical</option>
+              <option value="High">🟡 High</option>
+              <option value="Medium">🔵 Medium</option>
+              <option value="Low">🟢 Low</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ct-location">Location *</label>
+            <select class="form-select" id="ct-location">
+              <option value="">Select city</option>
+              <option>Pune</option><option>Mumbai</option><option>Delhi</option>
+              <option>Bangalore</option><option>Hyderabad</option><option>Chennai</option>
+              <option>Kolkata</option><option>Ahmedabad</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="ct-count">Volunteers Needed</label>
+            <input class="form-input" type="number" id="ct-count" placeholder="e.g. 5" min="1" max="100" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ct-duration">Duration</label>
+            <select class="form-select" id="ct-duration">
+              <option value="">Select</option>
+              <option>1 Day</option><option>Weekend</option><option>1 Week</option>
+              <option>2 Weeks</option><option>1 Month</option><option>Ongoing</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">🎯 Skills & Role</div>
+        <div class="form-group">
+          <label class="form-label">Required Skills (select all that apply)</label>
+          <div class="skill-chip-grid" id="ct-skill-chips">
+            <button type="button" class="skill-chip" data-skill="Medical"      onclick="App.toggleTaskSkill(this)">🏥 Medical</button>
+            <button type="button" class="skill-chip" data-skill="Tech"         onclick="App.toggleTaskSkill(this)">💻 Tech</button>
+            <button type="button" class="skill-chip" data-skill="Logistics"    onclick="App.toggleTaskSkill(this)">📦 Logistics</button>
+            <button type="button" class="skill-chip" data-skill="Teaching"     onclick="App.toggleTaskSkill(this)">📚 Teaching</button>
+            <button type="button" class="skill-chip" data-skill="Counseling"   onclick="App.toggleTaskSkill(this)">🧠 Counseling</button>
+            <button type="button" class="skill-chip" data-skill="Construction" onclick="App.toggleTaskSkill(this)">🔧 Construction</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ct-custom-role">Custom Role Title <span class="form-hint">(optional — overrides skill labels)</span></label>
+          <input class="form-input" type="text" id="ct-custom-role" placeholder="e.g. Camp Medical Officer, Relief Team Leader, Data Analyst…" />
+        </div>
+      </div>
+
+      <div class="form-error hidden" id="ct-error"></div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="App.guardPage('ngo-dash','ngo')">Cancel</button>
+        <button class="btn btn-primary btn-lg" onclick="App.createTask()">Publish Task 🚀</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ── NEW PAGE — Live Incidents Board ───────────────────────────────── -->
+<main id="page-incidents" class="page hidden" role="main">
+  <!-- Rendered by App.renderIncidentsPage() -->
+</main>
+
+<!-- ── NGO PROFILE ───────────────────────────────────────── -->
+<main id="page-ngo-profile" class="page hidden" role="main">
+  <!-- Rendered by App.openNgoProfilePage() -->
+</main>
+
+<!-- ── LEADERBOARD ───────────────────────────────────────── -->
+<main id="page-leaderboard" class="page hidden" role="main">
+  <!-- Rendered by App._renderLeaderboard() -->
+</main>
+
+<!-- ── ANALYTICS (NGO ONLY) ─────────────────────────────── -->
+<main id="page-analytics" class="page hidden" role="main">
+  <div class="section-wrapper">
+    <div class="page-header-row">
+      <div>
+        <div class="eyebrow dark">✦ NGO Analytics</div>
+        <h2 class="page-title">Impact Dashboard</h2>
+        <p class="page-sub">Real-time metrics tracking platform performance and social value.</p>
+      </div>
+      <button class="btn btn-ghost" onclick="App.guardPage('ngo-dash','ngo')">← Dashboard</button>
+    </div>
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="charts-row">
+      <div class="chart-card" id="skill-chart-card">
+        <div class="chart-title">Skill Distribution <span class="badge badge-blue ml-auto">By Volunteers</span></div>
+        <div id="skill-chart"></div>
+      </div>
+      <div class="chart-card" id="activity-card">
+        <div class="chart-title">Recent Activity <span class="badge badge-green ml-auto">Live</span></div>
+        <div id="activity-timeline"></div>
+      </div>
+    </div>
+    <div class="chart-card" id="crisis-card">
+      <div class="chart-title">Crisis Locations — Task Progress</div>
+      <div id="crisis-list"></div>
+    </div>
+<div class="chart-card" style="margin-top:16px">
+  <div class="chart-title">✅ Ended Projects — Detailed Impact</div>
+  <div id="ended-tasks-detail"></div>
+</div>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODALS
+════════════════════════════════════════════════════════════ -->
+
+<!-- Profile Modal -->
+<div class="modal-overlay hidden" id="modal-profile" onclick="App.handleModalOverlayClick(event,'modal-profile')">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-profile-title">
+    <div class="modal-header">
+      <h3 id="modal-profile-title" class="modal-title">User Profile</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-profile')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="modal-profile-body"></div>
+  </div>
+</div>
+
+<!-- Task Detail Modal -->
+<div class="modal-overlay hidden" id="modal-task-detail" onclick="App.handleModalOverlayClick(event,'modal-task-detail')">
+  <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="modal-task-title">
+    <div class="modal-header">
+      <h3 id="modal-task-title" class="modal-title">Task Details</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-task-detail')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="modal-task-detail-body"></div>
+  </div>
+</div>
+
+<!-- Add Hours Modal -->
+<div class="modal-overlay hidden" id="modal-add-hours" onclick="App.handleModalOverlayClick(event,'modal-add-hours')">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-hours-title">
+    <div class="modal-header">
+      <h3 id="modal-hours-title" class="modal-title">Log Volunteer Hours</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-add-hours')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-desc" id="modal-hours-desc"></p>
+      <input type="hidden" id="modal-hours-task-id" />
+      <input type="hidden" id="modal-hours-user-id" />
+      <div class="form-group mt-16">
+        <label class="form-label" for="modal-hours-input">Hours Contributed *</label>
+        <input class="form-input" type="number" id="modal-hours-input" min="1" max="200" placeholder="e.g. 8" />
+      </div>
+      <div class="form-error hidden" id="modal-hours-error"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="App.closeModal('modal-add-hours')">Cancel</button>
+        <button class="btn btn-primary" onclick="App.submitAddHours()">Log Hours ✓</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Dialog Modal -->
+<div class="modal-overlay hidden" id="modal-confirm" onclick="App.handleModalOverlayClick(event,'modal-confirm')">
+  <div class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="modal-confirm-title">
+    <div class="modal-header">
+      <h3 id="modal-confirm-title" class="modal-title">Confirm Action</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-confirm')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="modal-confirm-msg" class="modal-desc"></p>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="App.closeModal('modal-confirm')">Cancel</button>
+        <button class="btn btn-danger" id="modal-confirm-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-create-squad"
+     onclick="App.handleModalOverlayClick(event,'modal-create-squad')">
+  <div class="modal modal-sm" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 class="modal-title">⚔️ Build a squad</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-create-squad')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-create-squad-body">
+      <!-- Rendered by App._openCreateSquadModal() -->
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-invite-squad"
+     onclick="App.handleModalOverlayClick(event,'modal-invite-squad')">
+  <div class="modal modal-sm" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 class="modal-title">⚔️ Invite to squad</h3>
+      <button type="button" class="modal-close" onclick="App.closeModal('modal-invite-squad')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-invite-squad-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-donation"
+     onclick="App.handleModalOverlayClick(event,'modal-donation')">
+  <div class="modal modal-sm" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 class="modal-title">💚 Support this NGO</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-donation')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="modal-donation-ngo-id" />
+      <input type="hidden" id="modal-donation-ngo-name" />
+      <p class="modal-desc" id="modal-donation-ngo-label" style="margin-bottom:10px">Donating to NGO…</p>
+      <p style="font-size:.78rem;color:var(--green-mid);font-weight:600;margin-bottom:14px" id="modal-donation-balance"></p>
+      <!-- Presets -->
+      <div class="donation-presets" id="modal-donation">
+        <button class="donation-preset" data-amount="100"  onclick="App.setDonationAmount(100)">₹100</button>
+        <button class="donation-preset" data-amount="500"  onclick="App.setDonationAmount(500)">₹500</button>
+        <button class="donation-preset" data-amount="1000" onclick="App.setDonationAmount(1000)">₹1,000</button>
+        <button class="donation-preset" data-amount="5000" onclick="App.setDonationAmount(5000)">₹5,000</button>
+      </div>
+      <div class="form-group mt-16">
+        <label class="form-label" for="modal-donation-amount">Custom Amount (₹)</label>
+        <input class="form-input" type="number" id="modal-donation-amount" min="1" placeholder="Enter amount in ₹" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="modal-donation-note">Message (optional)</label>
+        <input class="form-input" type="text" id="modal-donation-note" placeholder="Proud to support your mission!" />
+      </div>
+      <div class="demo-payment-note">🔒 Demo mode — no real payment. Wallet balance is deducted if sufficient.</div>
+      <div class="form-error hidden" id="modal-donation-error"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="App.closeModal('modal-donation')">Cancel</button>
+        <button class="btn btn-emerald" onclick="App.submitDonation()">Donate ₹ 💚</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-bonus"
+     onclick="App.handleModalOverlayClick(event,'modal-bonus')">
+  <div class="modal modal-sm" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 class="modal-title">🏆 Reward Volunteer</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-bonus')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="modal-bonus-vol-id" />
+      <input type="hidden" id="modal-bonus-vol-name" />
+      <p class="modal-desc" id="modal-bonus-vol-label" style="margin-bottom:10px">Rewarding volunteer…</p>
+      <p style="font-size:.78rem;color:var(--amber);font-weight:600;margin-bottom:14px" id="modal-bonus-balance"></p>
+      <div class="donation-presets" id="modal-bonus">
+        <button class="donation-preset" data-amount="200"  onclick="App.setBonusAmount(200)">₹200</button>
+        <button class="donation-preset" data-amount="500"  onclick="App.setBonusAmount(500)">₹500</button>
+        <button class="donation-preset" data-amount="1000" onclick="App.setBonusAmount(1000)">₹1,000</button>
+        <button class="donation-preset" data-amount="2000" onclick="App.setBonusAmount(2000)">₹2,000</button>
+      </div>
+      <div class="form-group mt-16">
+        <label class="form-label" for="modal-bonus-amount">Custom Bonus (₹)</label>
+        <input class="form-input" type="number" id="modal-bonus-amount" min="1" placeholder="Enter bonus in ₹" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="modal-bonus-note">Recognition Note</label>
+        <input class="form-input" type="text" id="modal-bonus-note" placeholder="e.g. Outstanding leadership!" />
+      </div>
+      <div class="demo-payment-note">🔒 Demo mode — NGO wallet debited, volunteer wallet credited.</div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="App.closeModal('modal-bonus')">Cancel</button>
+        <button class="btn btn-primary" onclick="App.submitBonus()">Send Bonus 🏆</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-message"
+     onclick="App.handleModalOverlayClick(event,'modal-message')">
+  <div class="modal modal-lg" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-message-title">💬 Message</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-message')">✕</button>
+    </div>
+    <div class="modal-body" style="padding-bottom:0">
+      <div class="chat-thread" id="modal-message-thread"
+           style="min-height:260px;max-height:360px;overflow-y:auto;padding:4px 0;margin-bottom:14px"></div>
+      <div style="display:flex;gap:8px;padding:14px 0;border-top:1px solid var(--border)">
+        <input class="form-input" type="text" id="modal-message-input"
+               placeholder="Type a message…"
+               onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();App.sendChatMessage()}"
+               style="flex:1" />
+        <button class="btn btn-primary" onclick="App.sendChatMessage()">Send →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-rate-ngo"
+     onclick="App.handleModalOverlayClick(event,'modal-rate-ngo')">
+  <div class="modal modal-sm" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-rate-ngo-title">⭐ Rate NGO</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-rate-ngo')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Your Rating (1–5 Stars)</label>
+        <div class="star-picker">
+          <button type="button" class="star-btn" data-val="1" onclick="App.selectNgoStar(1)">★</button>
+          <button type="button" class="star-btn" data-val="2" onclick="App.selectNgoStar(2)">★</button>
+          <button type="button" class="star-btn" data-val="3" onclick="App.selectNgoStar(3)">★</button>
+          <button type="button" class="star-btn" data-val="4" onclick="App.selectNgoStar(4)">★</button>
+          <button type="button" class="star-btn" data-val="5" onclick="App.selectNgoStar(5)">★</button>
+        </div>
+      </div>
+      <div class="form-group mt-16">
+        <label class="form-label" for="modal-rate-ngo-note-input">Note (optional)</label>
+        <textarea class="form-textarea" id="modal-rate-ngo-note-input" rows="2"
+                  placeholder="Share your experience…"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="App.closeModal('modal-rate-ngo')">Cancel</button>
+        <button class="btn btn-primary" onclick="App.submitNgoRating()">Submit ⭐</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-rate-vol"
+     onclick="App.handleModalOverlayClick(event,'modal-rate-vol')">
+  <div class="modal modal-sm" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-rate-vol-title">⭐ Rate Volunteer</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-rate-vol')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Rating (1–5 Stars)</label>
+        <div class="star-picker">
+          <button type="button" class="star-btn" data-val="1" onclick="App.selectVolStar(1)">★</button>
+          <button type="button" class="star-btn" data-val="2" onclick="App.selectVolStar(2)">★</button>
+          <button type="button" class="star-btn" data-val="3" onclick="App.selectVolStar(3)">★</button>
+          <button type="button" class="star-btn" data-val="4" onclick="App.selectVolStar(4)">★</button>
+          <button type="button" class="star-btn" data-val="5" onclick="App.selectVolStar(5)">★</button>
+        </div>
+      </div>
+      <div class="form-group mt-16">
+        <label class="form-label" for="modal-rate-vol-note-input">Feedback (optional)</label>
+        <textarea class="form-textarea" id="modal-rate-vol-note-input" rows="2"
+                  placeholder="e.g. Exceptional dedication…"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="App.closeModal('modal-rate-vol')">Cancel</button>
+        <button class="btn btn-primary" onclick="App.submitVolRating()">Submit Rating ★</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="certificate-overlay" class="hidden" style="position:fixed;inset:0;z-index:2000">
+  <!-- Content rendered by App._openCertificateOverlay() -->
+</div>
+
+<div class="modal-overlay hidden" id="modal-squad-chat">
+  <div class="modal modal-lg" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-squad-chat-title">⚔️ Squad Chat</h3>
+      <button type="button" class="modal-close" onclick="App.closeSquadChatModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding-bottom:0">
+      <div class="chat-thread" id="squad-chat-thread"
+           style="min-height:260px;max-height:360px;overflow-y:auto;padding:4px 0;margin-bottom:14px"></div>
+      <div style="display:flex;gap:8px;padding:14px 0;border-top:1px solid var(--border)">
+        <input class="form-input" type="text" id="squad-chat-input"
+               placeholder="Message your squad…"
+               onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();App.sendSquadChatMessage()}"
+               style="flex:1" />
+        <button class="btn btn-primary" onclick="App.sendSquadChatMessage()">Send →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-report-incident"
+     onclick="App.handleModalOverlayClick(event,'modal-report-incident')">
+  <div class="modal modal-lg" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 class="modal-title">🚨 Report an Incident</h3>
+      <button class="modal-close" onclick="App.closeModal('modal-report-incident')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="ri-type">Incident Type *</label>
+        <select class="form-select" id="ri-type">
+          <option value="">Select type…</option>
+          <option>Flood / Water Logging</option>
+          <option>Mass Casualty — Road Accident</option>
+          <option>Fire / Building Collapse</option>
+          <option>Medical Emergency — Outbreak</option>
+          <option>Community Health Concern</option>
+          <option>Earthquake Damage</option>
+          <option>Missing Person / Child</option>
+          <option>Hunger / Food Crisis</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="ri-location">Location *</label>
+        <input class="form-input" type="text" id="ri-location"
+               placeholder="e.g. Hadapsar, Pune or NH-48 near Khopoli" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="ri-desc">Description *</label>
+        <textarea class="form-textarea" id="ri-desc" rows="3"
+                  placeholder="Describe what you see — number of people affected, immediate needs, road access…"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="ri-fatalities">Fatalities (if known)</label>
+          <input class="form-input" type="number" id="ri-fatalities" min="0" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ri-injuries">Injuries (if known)</label>
+          <input class="form-input" type="number" id="ri-injuries" min="0" placeholder="0" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Criticality</label>
+        <div class="crit-picker">
+          <label class="crit-option crit-high">
+            <input type="radio" name="ri-crit" id="ri-crit-high" value="High" />
+            <span>🔴 High — Immediate life risk</span>
+          </label>
+          <label class="crit-option crit-low">
+            <input type="radio" name="ri-crit" id="ri-crit-low" value="Low" checked />
+            <span>🟡 Low — Needs attention</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-error hidden" id="ri-error"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="App.closeModal('modal-report-incident')">Cancel</button>
+        <button class="btn btn-danger" onclick="App.submitIncidentReport()">
+          🚨 Submit Report
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCRIPTS  (order: backend → auth → app)
+════════════════════════════════════════════════════════════ -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="backend.js"></script>
+<script src="DemoINIT.js"></script>
+<script src="auth.js"></script>
+<script src="ai.js"></script>
+<script src="app.js"></script>
+<script src="app4.js"></script>
+</body>
+</html>
